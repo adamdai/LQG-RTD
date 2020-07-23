@@ -7,7 +7,7 @@ Reachability-based Trajectory Design (RTD) for a Linear-Quadratic-Gaussian (LQG)
 - `discrete_agent.m` - 2D agent with discrete LQG dynamics and measurement model (Kalman filter and LQR feedback)
 
 ### low_level_controllers
-- `LQR_LLC.m` - 
+- `LQR_LLC.m` - (infinite horizon) LQR linear feedback controller 
 
 ## FRS
 - `generate_linear_dynamics.m` - create matlab linear dynamics function to be used by CORA for reachability computation
