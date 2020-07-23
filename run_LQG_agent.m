@@ -1,8 +1,10 @@
-% Parameterize trajectory space and sample a few trajectories
-% and track them
+% Initialize an LQG agent (discrete or continuous) and simulate it tracking
+% a nominal linear trajectory
 
-%A = LQG_agent();
-A = discrete_agent();
+rng(252)
+
+A = LQG_agent();
+%A = discrete_LQG_agent();
 x0 = [0;0]; x_est0 = [0;0]; P0 = 5*eye(2);
 A.reset([x0; x_est0; vec(P0)])
 

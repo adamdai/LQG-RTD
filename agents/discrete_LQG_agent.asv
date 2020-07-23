@@ -28,13 +28,14 @@ classdef discrete_agent < translating_agent_2D
         %% constructor
         function A = discrete_agent(varargin)
             % set up default superclass values
-            name = 'Discrete Agent' ;
+            name = 'Discrete LQG Agent' ;
             default_footprint = 0.35/2 ;
             n_states = 8 ;
             n_inputs = 2 ;
             stopping_time = 3 ; % conservative estimate
             sensor_radius = 3 ;
-            LLC = LQR_LLC ;
+            LLC = LQR_LLC('n_agent_states',n_states,'n_agent_inputs',n_inputs,...
+                'discrete',1,'estimating',1) ;
             
             % create agent
             A@translating_agent_2D('name',name,...

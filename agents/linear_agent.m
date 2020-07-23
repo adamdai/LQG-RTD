@@ -28,7 +28,7 @@ classdef linear_agent < translating_agent_2D
             n_inputs = 2 ;
             stopping_time = 3 ; % conservative estimate
             sensor_radius = 3 ;
-            LLC = LQR_LLC ;
+            LLC = LQR_LLC('n_agent_states',n_states,'n_agent_inputs',n_inputs) ;
             
             % create agent
             A@translating_agent_2D('name',name,...

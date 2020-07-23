@@ -1,8 +1,7 @@
-% Parameterize trajectory space and sample a few trajectories
-% and track them
+% Initialize a continuous linear agent and simulate it tracking a nominal 
+% linear trajectory
 
-%A = linear_agent();
-A = discrete_agent();
+A = linear_agent();
 x0 = [0;0];
 A.reset(x0)
 
