@@ -2,6 +2,7 @@
 Reachability-based Trajectory Design (RTD) for a Linear-Quadratic-Gaussian (LQG) agent 
 
 ## agents
+- `translating_agent_2D` - generic 2D agent with no heading state (only translational x-y dynamics)
 - `linear_agent.m` - 2D agent with continuous linear Gaussian dynamics (LQR feedback)
 - `LQG_agent.m` - 2D agent with continuous LQG dynamics and measurement model (Kalman filter and LQR feedback)
 - `discrete_agent.m` - 2D agent with discrete LQG dynamics and measurement model (Kalman filter and LQR feedback)
