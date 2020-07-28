@@ -3,8 +3,8 @@
 
 rng(252)
 
-A = LQG_agent();
-%A = discrete_LQG_agent();
+%A = LQG_agent();
+A = discrete_LQG_agent();
 x0 = [0;0]; x_est0 = [0;0]; P0 = 5*eye(2);
 A.reset([x0; x_est0; vec(P0)])
 

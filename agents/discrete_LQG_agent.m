@@ -8,8 +8,8 @@ classdef discrete_LQG_agent < translating_agent_2D
         A = eye(2); 
         B = 0.01*eye(2);   % dt*I
         C = eye(2);
-        Q = 0.1*eye(2);
-        R = 0.1*eye(2);
+        Q = 1e-4*eye(2);
+        R = 1e-4*eye(2);
         
         % state estimate indices
         state_est_indices = [3 4];

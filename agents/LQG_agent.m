@@ -76,7 +76,7 @@ classdef LQG_agent < translating_agent_2D
         end
         
         %% dynamics
-        function zd = dynamics(A,t,z,T,U,Z)
+        function dz = dynamics(A,t,z,T,U,Z)
             % get current state
             x = z(A.position_indices) ;
             x_est = z(A.state_est_indices) ;
@@ -94,13 +94,13 @@ classdef LQG_agent < translating_agent_2D
             v = mvnrnd([0;0],A.R)';
             
             % calculate the derivatives
-            xd = A.A*x + A.B*u + w;
+            dx = A.A*x + A.B*u + w;
             L = P*A.C'/A.R; % Kalman gain
-            x_estd = u + L*(A.C*x + v - A.C*x_est);
-            Pd = A.Q - L*A.R*L';
+            dx_est = u + L*(A.C*x + v - A.C*x_est);
+            dP = A.Q - L*A.R*L';
             
             % return state derivative
-            zd = [xd; x_estd; vec(Pd)] ;
+            dz = [dx; dx_est; vec(dP)] ;
         end
         
         %% integrator options
