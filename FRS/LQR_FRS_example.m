@@ -23,22 +23,27 @@ sys.A = A; sys.B = B; sys.C = C;
 sys.K = K; sys.Q = Q; sys.R = R;
 
 x0 = [0;0]; % inital state
-P0 = eye(2); % initial covariance
+% P0 = eye(2); % initial covariance
+eps = 1e-5*eye(2);
+P0 = blkdiag(eye(2),eps);
 
 % define trajectory parameter space
 K1 = 0.2; % -0.2 to +0.2
 K2 = 0.2; % -0.2 to +0.2
 
 % compute nominal trajectory FRS
-x_nom = linear_FRS(K1,K2,t_f,dt);
+X_nom = linear_FRS(K1,K2,t_f,dt);
 
 %% full trajectory reachability calculation
 
 % initial reachable set X0
-xZ0 = [0;0]; % (uncertain) mean
-X0 = probZonotope(xZ0,cov2probGen(P0),3);
+xZ0 = [0;0;0;0]; % (uncertain) mean
+                 % x0, y0, k1_c, k2_c
+xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
+% X0 = probZonotope(xZ0,cov2probGen(P0),3);
+X0 = probZonotope(xZ0,eye(4),3);
 
-pXrs_full = LQG_reach(x_nom,sys,X0);
+pXrs_full = LQG_FRS(X_nom,sys,X0);
 
 %% plot 3-sigma confidence zonotopes
 m = 3;

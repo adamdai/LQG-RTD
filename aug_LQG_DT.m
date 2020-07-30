@@ -32,15 +32,17 @@ function sn = aug_LQG_DT(tdummy,s,udummy,Tdummy)
     u = k - K*(x_est - x_nom);
 
     % sample noise
-    w = mvnrnd([0;0],Q)';
-    v = mvnrnd([0;0],R)';
+%     w = mvnrnd([0;0],Q)';
+%     v = mvnrnd([0;0],R)';
     
     % propagate forward nominal trajectory
     x_nom = A*x_nom + B*k;
 
     % dynamics and measurement model
-    xn = A*x + B*u + w;
-    y = C*xn + v;
+%     xn = A*x + B*u + w;
+%     y = C*xn + v;
+    xn = A*x + B*u;
+    y = C*xn;
     
     % Kalman predict
     x_estn = A*x_est + B*u;

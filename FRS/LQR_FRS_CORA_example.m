@@ -4,7 +4,7 @@
 %% compute reachable set
 clear; clc;
 
-t_total = 1;
+t_total = 0.1;
 dt = 0.01;
 dim = 12;
 
@@ -42,7 +42,7 @@ options.timeStep = dt; %time step size for reachable set computation
 options.reachabilitySteps = options.tFinal / options.timeStep;
 
 % additional parameters for reachability analysis
-options.tensorOrder = 3;
+options.tensorOrder = 1;
 options.errorOrder = 5;
 options.reductionTechnique = 'girard';
 
@@ -51,12 +51,11 @@ options.uTrans = 0; % center of input set
 options.U = zonotope([0, 0]);
 
 % options.advancedLinErrorComp = 0;
-% options.tensorOrder = 1;
 % options.reductionInterval = inf;
 % 
 % options.taylorTerms = 5; %number of taylor terms for reachable sets
 % options.maxError = 1*ones(dim, 1); % this controls splitting, set it high to avoid splitting
-% options.verbose = 1;
+options.verbose = 1;
 
 
 % specify discrete dynamics ----------------------------------------------
@@ -68,7 +67,7 @@ Rcont = reach(sys, options);
 tComp = toc;
 disp(['computation time of reachable set: ', num2str(tComp)]);
 
-% plot reachable set
+% plot position reachable set
 figure(1); clf; hold on; axis equal;
 title('Workspace', 'FontSize', 24);
 xlabel('$x$', 'Interpreter', 'latex', 'FontSize', 24);
@@ -80,6 +79,20 @@ for i = 1:N
    p_FRS.FaceAlpha = 0.02;
    p_FRS.EdgeAlpha = 0.4;
 end
+
+% plot estimate reachable set
+figure(2); clf; hold on; axis equal;
+title('Workspace', 'FontSize', 24);
+xlabel('$x$', 'Interpreter', 'latex', 'FontSize', 24);
+ylabel('$y$', 'Interpreter', 'latex', 'FontSize', 24);
+N = length(Rcont);
+for i = 1:N
+   Rcont{i} = deleteZeros(Rcont{i});
+   p_FRS = plotFilled(Rcont{i}, [3, 4], 'r'); 
+   p_FRS.FaceAlpha = 0.02;
+   p_FRS.EdgeAlpha = 0.4;
+end
+
 
 %% create obstacle and intersect with FRS
 obs_center = [0.1; 0];
