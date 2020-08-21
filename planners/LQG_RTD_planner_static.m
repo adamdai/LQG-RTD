@@ -8,7 +8,6 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
 
     properties
         point_spacing
-        FRS_polynomial_structure
         current_obstacles_raw
         current_obstacles_in_FRS_coords
         bounds_as_obstacle
@@ -28,11 +27,8 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
         end
         
         function load_FRS_files(P,~,~)
-            FRS_data = cell(1,3) ;
-            FRS_data{1} = load('turtlebot_FRS_deg_10_v_0_0.0_to_0.5.mat') ;
-            FRS_data{2} = load('turtlebot_FRS_deg_10_v_0_0.5_to_1.0.mat') ;
-            FRS_data{3} = load('turtlebot_FRS_deg_10_v_0_1.0_to_1.5.mat') ;
-            P.FRS = FRS_data ;
+            FRS_data = load('LQG_FRS.mat') ;
+            P.FRS = FRS_data.Xrs ;
         end
         
         function setup(P,agent_info,world_info)
@@ -68,32 +64,9 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
             % P.bounds_as_obstacle = interpolate_polyline_with_spacing(B(:,end:-1:1),P.point_spacing);
             P.bounds_as_obstacle = B ;
             
-            % process the FRS polynomial
-            for idx = 1:3
-                I = P.FRS{idx}.FRS_polynomial - 1 ;
-                z = P.FRS{idx}.z ;
-                k = P.FRS{idx}.k ;
-                P.FRS_polynomial_structure{idx} = get_FRS_polynomial_structure(I,z,k) ;
-            end
         end
         
         %% online planning: process obstacles
-        function determine_current_FRS(P,agent_info)
-            if nargin < 2
-                v_0 = 0 ;
-            else
-                v_0 = agent_info.state(4,end) ; % initial speed
-            end
-            
-            % pick fastest FRS for current speed
-            if v_0 >= 1.0
-                P.current_FRS_index = 3 ;
-            elseif v_0 >= 0.5
-                P.current_FRS_index = 2 ;
-            else
-                P.current_FRS_index = 1 ;
-            end
-        end
         
         function process_world_info(P,world_info,~)
             % extract obstacles
@@ -103,7 +76,7 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
             O_bounds = P.bounds_as_obstacle ;
             
             % get current FRS
-            FRS_cur = P.FRS{P.current_FRS_index} ;
+            FRS_cur = P.FRS ;
             
             % buffer and discretize obstacles
             [O_FRS, ~, O_pts] = compute_turtlebot_discretized_obs(O,...
@@ -128,7 +101,7 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
             z_goal_local = world_to_local(z(1:3),z_goal(1:2)) ;
             
             % create cost function
-            FRS_cur = P.FRS{P.current_FRS_index} ;
+            FRS_cur = P.FRS ;
             P.trajopt_problem.cost_function = @(k) turtlebot_cost_for_fmincon(k,...
                                                     FRS_cur,z_goal_local,...
                                                     start_tic,P.t_plan) ;
@@ -140,7 +113,7 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
             O_FRS = P.current_obstacles_in_FRS_coords ;
             
             % get current FRS
-            FRS_cur = P.FRS{P.current_FRS_index} ;
+            FRS_cur = P.FRS ;
             
             if ~isempty(O_FRS)
                 % remove NaNs

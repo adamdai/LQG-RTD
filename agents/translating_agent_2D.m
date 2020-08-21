@@ -55,12 +55,9 @@ classdef translating_agent_2D < agent
                     A.state = state ;
                 case 2
                     A.state(A.position_indices) = state ;
-                case 3
-                    A.state([A.position_indices,A.heading_index]) = state ;
                 otherwise
                     error(['The provided state has an incorrect number of elements!',...
-                        ' Please provide either a 2-by-1 position, a 3-by-1 position',...
-                        ' and heading, or an n_states-by-1 full state vector.'])
+                        ' Please provide either a 2-by-1 position or an n_states-by-1 full state vector.'])
             end
         end
         
@@ -73,7 +70,6 @@ classdef translating_agent_2D < agent
             agent_info.desired_time = A.desired_time ;
             agent_info.desired_input = A.desired_input ;
             agent_info.desired_trajectory = A.desired_trajectory ;
-            agent_info.heading_index = A.heading_index ;
             agent_info.footprint = A.footprint ;
             agent_info.footprint_vertices = A.footprint_vertices ;
         end

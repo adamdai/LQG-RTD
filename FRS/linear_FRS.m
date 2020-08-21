@@ -1,4 +1,4 @@
-% Given a nominal input range K1 x K2, compute the FRS for the linear 
+% Given a nominal input range K1 x K2, compute the FRS for a 2D linear 
 % trajectory model
 % 
 % Inputs:
