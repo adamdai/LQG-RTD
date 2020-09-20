@@ -1,4 +1,6 @@
 classdef translating_agent_2D < agent
+    % RTD_agent_2D with no heading
+    % moves translationally 
     %% properties
     properties
         

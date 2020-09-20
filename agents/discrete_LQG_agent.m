@@ -1,5 +1,5 @@
 classdef discrete_LQG_agent < translating_agent_2D
-% Class: linear_agent < translating_agent_2D < agent
+% Class: discrete_LQG_agent < translating_agent_2D < agent
 %
 % Description
     
@@ -103,7 +103,7 @@ classdef discrete_LQG_agent < translating_agent_2D
             L = Pn*A.C'/(A.C*Pn*A.C' + A.R);
             x_estn = x_estn + L*(y - A.C*x_estn);
             Pn = Pn - L*A.C*Pn;
-            sn = [xn; x_estn; vec(Pn)];
+            sn = [xn; x_estn; Pn(:)];
         end
         
         %% integrator options

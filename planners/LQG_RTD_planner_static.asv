@@ -102,14 +102,49 @@ classdef LQG_RTD_planner_static < generic_RTD_planner
                 for o_idx = 1:N_obstacles
                     % get the current obstacle at the current time step
                     % convert box to zonotope
-                    V = O(:,(o_idx-1)*6+1:(o_idx-1)*6+4);
-                    c = sum(V,2) / 4;
-                    G = [V(:,2)-V(:,1) V(:,4)-V(:,1)] / 2;
-                    o = zonotope(c,G);
+                    V = O((o_idx-1)*6:(o_idx-1)*6+4);
+                    c = sum(V,2);
+                    G = 
                     %o = O{o_idx} ;
 
-                    
-                    Z = o - x_0 ;
+                    if isa(o,'zonotope_dynamic_obstacle')
+                        % get the current time in the horizon [0,t_f] of
+                        % the zonotope FRS, and add the obstacle's current
+                        % time to it (the obstacle's current time does not
+                        % update until W.collision_check is called, which
+                        % is after P.replan in simulator.run)
+                        t_idx = P.FRS_time(FRS_idx) + o.current_time ;
+
+                        G = o.zono.generators ;
+                        % c = o.get_position_at_time(t_idx) ;
+
+%                         % dilate the obstacle zonotope to cover the whole
+%                         % time interval, plus an additional buffer distance
+%                         % for safety's sake
+%                         if FRS_idx > 1
+%                             t_idx_prev = P.FRS_time(FRS_idx-1) + o.current_time ;
+%                             p0 = o.get_position_at_time(t_idx_prev) ;
+%                             p1 = o.get_position_at_time(t_idx) ;
+% 
+%                             c = (p0 + p1)./2 ; % average position
+%                             dp = abs(p0 - p1)./2 ; % average change in position
+%                             G = diag(G) + dp + P.obs_dyn_buffer ;
+% 
+%                          
+%                         else
+%                             c = o.get_position_at_time(t_idx) ;
+%                         end
+                        
+                        c = o.get_position_at_time(t_idx) ;
+
+                        % subtract the initial location
+                        c = c - x_0 ;
+
+                        % make zonotope
+                        Z = zonotope([c,diag(G)]) ;
+                    else
+                        Z = o.zono - x_0 ;
+                    end
 
                     % fill in the obstacle cell array 
                     O_zono_idx{o_idx} = Z ;

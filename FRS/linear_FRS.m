@@ -27,43 +27,40 @@ function frs = linear_FRS(K1,K2,t_f,dt)
     k2c = 0; % center of y speed interval
     k2g = K2; % k2c +- k2g
 
-    % set FRS options
-    options.tStart = 0;
-    options.tFinal = t_f;
-    options.x0 = [x_0; y_0; k1c; k2c]; % center of initial set
-    options.R0 = zonotope([options.x0, [0;0;k1g;0], [0;0;0;k2g]]); % generators for parameter dimensions
-    options.timeStep = dt; %time step size for reachable set computation
-    options.taylorTerms = 5; %number of taylor terms for reachable sets
-    options.zonotopeOrder = 20; %zonotope order... increase this for more complicated systems.
-    options.maxError = 1*ones(4, 1); % this controls splitting, set it high to avoid splitting
-    options.verbose = 1;
-
-    options.uTrans = 0; % center of input set
-    options.U = zonotope([0, 0]);
-
-    options.originContained = 1;
-    options.advancedLinErrorComp = 0;
-    options.tensorOrder = 1;
-    options.reductionInterval = inf;
+    % reach params
+    params.tStart = 0;
+    params.tFinal = t_f;
+    x0 = [x_0; y_0; k1c; k2c]; % center of initial set
+    params.R0 = zonotope([x0, [0;0;k1g;0], [0;0;0;k2g]]); % generators for parameter dimensions
+    %params.u = 0; % center of input set
+    params.U = zonotope([0, 0]);
+    
+    % reach options
+%     options.originContained = 1;
+%     options.advancedLinErrorComp = 0;
+%     options.tensorOrder = 1;
+%     options.reductionInterval = inf;
     options.reductionTechnique = 'girard';
+    options.zonotopeOrder = 20;
 
     % specify continuous dynamics----------------------------------------------
     % transition matrix for state augmented with constant input (k1,k2)
-    A = [0 0 1 0; 
-         0 0 0 1; 
-         0 0 0 0; 
-         0 0 0 0]; 
+    A = [1 0 dt 0; 
+         0 1 0 dt; 
+         0 0 1 0; 
+         0 0 0 1]; 
     B = zeros(4,1);
-    sys = linearSys('sys',A,B);
+    sys = linearSysDT(A,B,dt);
 
     % compute reachable set----------------------------------------------------
     tic
-    frs = reach(sys, options);
+    frs = reach(sys,params,options);
     tComp = toc;
     disp(['computation time of reachable set: ', num2str(tComp)]);
     
-    % remove zero generators
-    for i = 1: length(frs)
+    % extract reachable set in time
+    frs = frs.timePoint.set;
+    for i = 1:length(frs)
         frs{i} = deleteZeros(frs{i});
     end
     

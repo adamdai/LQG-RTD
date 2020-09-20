@@ -100,7 +100,7 @@ classdef LQG_agent < translating_agent_2D
             dP = A.Q - L*A.R*L';
             
             % return state derivative
-            dz = [dx; dx_est; vec(dP)] ;
+            dz = [dx; dx_est; dP(:)] ;
         end
         
         %% integrator options

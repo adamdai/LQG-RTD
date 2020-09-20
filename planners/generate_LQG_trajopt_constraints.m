@@ -1,18 +1,12 @@
-function [A_con, b_con] = generate_LQG_trajopt_constraints(v_0, a_0,...
-    FRS, obstacles)
+function [A_con, b_con] = generate_LQG_trajopt_constraints(FRS, obstacles, start_tic, timeout)
 
     position_dimensions = [1; 2];
     param_dimensions = [3; 4];
-    IC_dim = [2; 7; 12; 3; 8; 13];
-    IC = [v_0; a_0] ;
 
     %% compute the unsafe set for each FRS time slice
     b_con = [];
     for idx = 1:length(FRS)
         frs = FRS{idx}{1};
-
-        % slice frs by initial condition
-        frs = zonotope_slice(frs, IC_dim, IC);
 
         % compute unsafe trajectory parameters
         K_unsafe = compute_unsafe_params(frs, obstacles{idx},...
@@ -33,6 +27,11 @@ function [A_con, b_con] = generate_LQG_trajopt_constraints(v_0, a_0,...
 
     A = [1 0 0; -1 0 0; 0 1 0; 0 -1 0; 0 0 1; 0 0 -1] ;
     A_con = repmat(A,size(b_con,1)/6,1) ;
+    
+    % perform timeout check
+    if nargin > 3 && toc(start_tic) > timeout
+        error('Timed out while evaluating cost function!')
+    end
 end
 
 function [R_unsafe] = compute_unsafe_params(frs, obs, workspace_dim, param_dim)

@@ -1,7 +1,6 @@
 function [T,U,Z] = make_linear_trajectory(t_f,vx_des,vy_des)
-% [T,U,Z] = make_turtlebot_desired_trajectory(t_f,w_des,v_des)
 %
-% Create a Dubins path as a full-state trajectory for the TurtleBot.
+% Create a straight line trajectory for linear agent.
 %
 % The inputs are:
 %   t_f       planning time horizon

@@ -1,3 +1,7 @@
+% example for computing FRS for LQG agent over a space trajectory
+% parameters and intersecting it with a zonotopic obstacle to determine
+% unsafe trajectory parameters
+
 clc
 clear
 close all
@@ -47,10 +51,10 @@ hold on; grid on;
 
 % plot full FRS
 for i = 1:N
-    umeanZ = zonotope(get(pXrs{i},'Z'));
-    covZ = cov2zonotope(get(pXrs{i},'cov'),m);
+    umeanZ = mean(pXrs{i});
+    covZ = cov2zonotope(sigma(pXrs{i}),m);
     Xrs{i} = umeanZ + covZ;
-    plot(Xrs{i},[1,2],'black');
+    plot(Xrs{i},[1,2],'Color','black');
 end
 
 axis equal
@@ -65,7 +69,7 @@ obstacle = obs_zono.Z;
 
 % plot obstacle;
 figure(1);
-p_obs = plotFilled(obs_zono, [1, 2], 'r');
+p_obs = plot(obs_zono,[1, 2],'FaceColor','r','Filled',true);
 p_obs.FaceAlpha = 0.5;
 p_obs.EdgeAlpha = 0.5;
 
@@ -137,7 +141,7 @@ plot(k1_user, k2_user, 'b.', 'MarkerSize', 30, 'LineWidth', 6);
 % plot reachable set corresponding to particular parameter "slice"
 figure(1);
 for i = 1:length(Xrs)
-    p_slice = plotFilled(zonotope_slice(Xrs{i}, k_dim, [k1_user; k2_user]), [1, 2], 'b');
+    p_slice = plot(zonotope_slice(Xrs{i},k_dim,[k1_user; k2_user]),[1, 2],'FaceColor','b','Filled',true);
     p_slice.FaceAlpha = 0.25;
 end
 

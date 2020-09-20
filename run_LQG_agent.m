@@ -6,7 +6,7 @@ rng(252)
 %A = LQG_agent();
 A = discrete_LQG_agent();
 x0 = [0;0]; x_est0 = [0;0]; P0 = 5*eye(2);
-A.reset([x0; x_est0; vec(P0)])
+A.reset([x0; x_est0; P0(:)])
 
 t_f = 1;
 vx_des = 1.0; 
@@ -18,10 +18,11 @@ A.move(t_total,T,U,Z)
 
 %% plotting
 figure(1) ; clf ; axis equal ; hold on ; set(gca,'FontSize',15)
+set(gcf,'Position',[800,100,1200,900])
 
 plot(Z(1,:),Z(2,:),'b--','LineWidth',1.5)
 plot(A)
-A.animate()
+A.animate(true)
 
 
 
