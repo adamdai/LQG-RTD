@@ -2,8 +2,7 @@
 % along a nominal trajectory of length N given an initial stochastic set
 % 
 % Inputs:
-%   x_nom - n x N array containing nominal trajectory, or cell array of 
-%           zonotopes containing nominal trajectory reachable space
+%   x_nom - n x N array containing nominal trajectory
 %   sys   - struct continaing system matrices A,B,and C, LQR gain K, and  
 %           noise covariance matrices Q and R  
 %   X0    - initial stochastic set stored as a probZonotope

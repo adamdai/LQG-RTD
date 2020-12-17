@@ -30,15 +30,15 @@ P0 = eye(2); % initial covariance
 
 % trajectory producing model 
 % % constant control for time horizon
-% u_nom = [1; 1.5];
-% u_nom = repmat(u_nom,1,N);
+u_nom = [1; 1.5];
+u_nom = repmat(u_nom,1,N);
 
 % complex trajectory (composed linear segments)
-u_nom = [repmat([9;6],1,N_seg),... 
-         repmat([6;1],1,N_seg),...
-         repmat([6;-2],1,N_seg),...
-         repmat([5;-0.6],1,N_seg),...
-         repmat([4.5;1.5],1,N_seg)];
+% u_nom = [repmat([9;6],1,N_seg),... 
+%          repmat([6;1],1,N_seg),...
+%          repmat([6;-2],1,N_seg),...
+%          repmat([5;-0.6],1,N_seg),...
+%          repmat([4.5;1.5],1,N_seg)];
 
 % iteratively generate nominal trajectory
 x_nom = zeros(2,N); x_nom(:,1) = x0;
@@ -149,27 +149,29 @@ for k = 1:M % for each segment
     end
 end
 
-% plot some arbitrary obstacles
-obs_center = [27; 0];
-obs_gen = [[6; 1.2], [-1.2; 6]];
-obs1 = zonotope([obs_center, obs_gen]);
+%% plot some arbitrary obstacles
+% obs_center = [27; 0];
+% obs_gen = [[6; 1.2], [-1.2; 6]];
+% obs1 = zonotope([obs_center, obs_gen]);
+% 
+% obs_center = [45; 20];
+% obs_gen = [[0.3; 4], [4; -0.3]];
+% obs2 = zonotope([obs_center, obs_gen]);
+% 
+% % plot obstacle;
+% figure(1);
+% p_obs = plot(obs1,[1, 2],'FaceColor','r','Filled',true);
+% p_obs.FaceAlpha = 0.5;
+% p_obs.EdgeAlpha = 0.5;
+% p_obs = plot(obs2,[1, 2],'FaceColor','r','Filled',true);
+% p_obs.FaceAlpha = 0.5;
+% p_obs.EdgeAlpha = 0.5;
+% 
 
-obs_center = [45; 20];
-obs_gen = [[0.3; 4], [4; -0.3]];
-obs2 = zonotope([obs_center, obs_gen]);
-
-% plot obstacle;
-figure(1);
-p_obs = plot(obs1,[1, 2],'FaceColor','r','Filled',true);
-p_obs.FaceAlpha = 0.5;
-p_obs.EdgeAlpha = 0.5;
-p_obs = plot(obs2,[1, 2],'FaceColor','r','Filled',true);
-p_obs.FaceAlpha = 0.5;
-p_obs.EdgeAlpha = 0.5;
-
-axis equal
-xlabel('x-coordinate (m)');
-ylabel('y-coordinate (m)');
+%%
+% axis equal
+% xlabel('x-coordinate (m)');
+% ylabel('y-coordinate (m)');
 
 % figure(2)
 % hold on; grid on;
