@@ -7,6 +7,7 @@ clear
 close all
 
 %% 2D system
+n = 2; % dimension
 
 % trajectory discretization and length
 t_f = 10; dt = 0.2; N = t_f/dt; 
@@ -25,16 +26,16 @@ x0 = [0;0]; % inital state
 P0 = 0.3*eye(2); % initial covariance
 
 % define trajectory parameter space
-K1 = 0.5; % -0.2 to +0.2
-K2 = 0.5; % -0.2 to +0.2
+K1 = 5; % -0.2 to +0.2
+K2 = 4; % -0.2 to +0.2
 U_nom = zonotope([0 K1 0; 0 0 K2]);
 
 %% full trajectory reachability calculation
 
 % initial reachable set X0
-xZ0 = [0;0;0;0]; % (uncertain) mean
-                 % x0, y0, k1_c, k2_c
-xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
+% xZ0 = [0;0;0;0]; % (uncertain) mean
+%                  % x0, y0, k1_c, k2_c
+% xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
 X0 = probZonotope(x0,cov2probGen(P0),3);
 %X0 = probZonotope(xZ0,cov2probGen(blkdiag(P0,zeros(2))),3);
 
@@ -50,7 +51,7 @@ hold on; grid on;
 % plot full FRS
 for i = 1:N
     umeanZ = mean(pXrs{i});
-    covZ = cov2zonotope(sigma(pXrs{i}),m);
+    covZ = cov2zonotope(sigma(pXrs{i}),m,n);
     Xrs{i} = umeanZ + covZ;
     plot(Xrs{i},[1,2],'Color','black');
 end
@@ -60,8 +61,8 @@ xlabel('x-coordinate (m)');
 ylabel('y-coordinate (m)');
 
 %% create obstacle and intersect with FRS
-obs_center = [6; 0];
-obs_gen = [[2; 0], [1; 3]];
+obs_center = [30; 0];
+obs_gen = [[10; 0], [5; 15]];
 obs_zono = zonotope([obs_center, obs_gen]);
 obstacle = obs_zono.Z;
 
@@ -145,7 +146,7 @@ end
 
 %% sample trajectories 
 
-N_traj = 100;
+N_traj = 1000;
 
 X = simulate_LQG_trajectory(sys,N,N_traj,[k1_user; k2_user],x0,P0);
 

@@ -1,4 +1,4 @@
-function Z = cov2zonotope(cov,m)
+function Z = cov2zonotope(cov,m,n)
 % cov2zonotope - Converts a covariance matrix to a zonotope with mSigma
 % confidence level
 %
@@ -8,6 +8,7 @@ function Z = cov2zonotope(cov,m)
 % Inputs:
 %    cov - covariance matrix
 %    m - confidence interval
+%    n - dimensions
 %
 % Outputs:
 %    Z - zonotope representing mSigma interval of covariance matrix
@@ -27,13 +28,15 @@ function Z = cov2zonotope(cov,m)
 
 %------------- BEGIN CODE --------------
 
+eps = sqrt(chi2inv(erf(m/sqrt(2)),n));
+
 dim = size(cov,1);
 
 [V,D] = eig(cov);
 D = round(D,4);
 G = V*sqrt(D);
 
-newG = m*G;
+newG = eps*G;
 Z = zonotope([zeros(dim,1), newG]);
 
 %------------- END OF CODE --------------

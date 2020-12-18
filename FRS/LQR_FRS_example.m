@@ -25,8 +25,8 @@ x0 = [0;0]; % inital state
 P0 = 0.5*eye(2); % initial covariance
 
 % define trajectory parameter space
-K1 = 0.5; % -0.2 to +0.2
-K2 = 0.5; % -0.2 to +0.2
+K1 = 0.5; % -0.5 to +0.5
+K2 = 0.5; % -0.5 to +0.5
 
 % compute nominal trajectory FRS
 X_nom = linear_FRS(K1,K2,t_f,dt);
