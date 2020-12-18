@@ -22,19 +22,20 @@ function pXrs = LQG_matrix_FRS(U_nom, x_nom_0, sys, X0, N)
     
     % parameters
     n = size(A,1); % system dimension
+    m = dim(U_nom); % input dimension
     
     % initial state covariance
     P = sigma(X0); 
     P = P(1:n,1:n);
     
     % initial state estimation error
-    X_0_tilde = probZonotope([0;0], cov2probGen(P),3);
+    X_0_tilde = probZonotope(zeros(n,1),cov2probGen(P),3);
     
     % process noise and measurement noise
 %     WpZ = probZonotope([0;0;0;0],blkdiag(cov2probGen(Q),zeros(2)),3);
 %     VpZ = probZonotope([0;0;0;0],blkdiag(cov2probGen(R),zeros(2)),3);
-    WpZ = probZonotope([0;0],cov2probGen(Q),3);
-    VpZ = probZonotope([0;0],cov2probGen(R),3);
+    WpZ = probZonotope(zeros(n,1),cov2probGen(Q),3);
+    VpZ = probZonotope(zeros(n,1),cov2probGen(R),3);
 
     % initialize FRS
     pXrs = cell(1,N);
@@ -66,11 +67,11 @@ function pXrs = LQG_matrix_FRS(U_nom, x_nom_0, sys, X0, N)
         coeff_c{k} = eye(n);  coeff_d{k} = zeros(n);
 
         % calculate all CpZ and DpZ terms
-        all_CpZ = [coeff_c{k}; zeros(2)] * WpZ;
-        all_DpZ = [coeff_d{k}; zeros(2)] * VpZ;
+        all_CpZ = [coeff_c{k}; zeros(m,n)] * WpZ;
+        all_DpZ = [coeff_d{k}; zeros(m,n)] * VpZ;
         for i = 2:k-1
-            all_CpZ = all_CpZ + [coeff_c{i}; zeros(2)] * WpZ;
-            all_DpZ = all_DpZ + [coeff_d{i}; zeros(2)] * VpZ;
+            all_CpZ = all_CpZ + [coeff_c{i}; zeros(m,n)] * WpZ;
+            all_DpZ = all_DpZ + [coeff_d{i}; zeros(m,n)] * VpZ;
         end
 
         % compute reachable set
@@ -80,7 +81,7 @@ function pXrs = LQG_matrix_FRS(U_nom, x_nom_0, sys, X0, N)
         end
         AB_coeff = AB_coeff * B;
         
-        pXr = [A^k; zeros(2)] * X0 + [AB_coeff; eye(2)] * U_nom + [coeff_a; zeros(2)] * (X0) + [coeff_b; zeros(2)] * X_0_tilde + all_CpZ + all_DpZ;
+        pXr = [A^k; zeros(m,n)] * X0 + [AB_coeff; eye(m,m)] * U_nom + [coeff_a; zeros(m,n)] * (X0 + -x_nom_0) + [coeff_b; zeros(m,n)] * X_0_tilde + all_CpZ + all_DpZ;
         %pXr = blkdiag(coeff_a - coeff_b,eye(n))*(X0 - X_nom{1}) + aug_CpZ + aug_DpZ;
         %pXr = blkdiag(coeff_a - coeff_b,eye(n))*X_diff + aug_CpZ + aug_DpZ;
         %pXr = aug_CpZ + aug_DpZ;

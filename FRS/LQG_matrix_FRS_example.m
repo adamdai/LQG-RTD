@@ -7,27 +7,54 @@ clear
 close all
 
 %% 2D system
-n = 2; % dimension
+% n = 2; % dimension
+% 
+% % trajectory discretization and length
+% t_f = 10; dt = 0.2; N = t_f/dt; 
+% 
+% % system
+% A = eye(2); B = dt*eye(2); C = eye(2);
+% K = dlqr(A,B,eye(2),eye(2)); % feedback law u = -Kx
+% Q = diag([0.1 0.1]); % process noise covariance
+% R = diag([0.1 0.1]); % measurement noise covariance
+% 
+% % form sys struct
+% sys.A = A; sys.B = B; sys.C = C;
+% sys.K = K; sys.Q = Q; sys.R = R;
+% 
+% x0 = [0;0]; % inital state
+% P0 = 0.3*eye(2); % initial covariance
+% 
+% % define trajectory parameter space
+% K1 = 5; 
+% K2 = 4; 
+% U_nom = zonotope([0 K1 0; 0 0 K2]);
+
+%% double integrator system
+n = 4; % state dimension
 
 % trajectory discretization and length
-t_f = 10; dt = 0.2; N = t_f/dt; 
+t_f = 1; dt = 0.02; N = t_f/dt; 
 
 % system
-A = eye(2); B = dt*eye(2); C = eye(2);
-K = dlqr(A,B,eye(2),eye(2)); % feedback law u = -Kx
-Q = diag([0.1 0.1]); % process noise covariance
-R = diag([0.1 0.1]); % measurement noise covariance
+A = eye(n);
+A(1:2,3:4) = dt*eye(2);
+B = 10*[zeros(2); dt*eye(2)]; 
+C = eye(n);
+K = dlqr(A,B,eye(n),eye(2)); % feedback law u = -Kx
+Q = 0.001 * eye(n); % process noise covariance
+R = 0.001 * eye(n); % measurement noise covariance
 
 % form sys struct
 sys.A = A; sys.B = B; sys.C = C;
 sys.K = K; sys.Q = Q; sys.R = R;
 
-x0 = [0;0]; % inital state
-P0 = 0.3*eye(2); % initial covariance
+x0 = zeros(n,1); % inital state
+P0 = 0.003*eye(n); % initial covariance
 
 % define trajectory parameter space
-K1 = 5; % -0.2 to +0.2
-K2 = 4; % -0.2 to +0.2
+K1 = 1;
+K2 = 1; 
 U_nom = zonotope([0 K1 0; 0 0 K2]);
 
 %% full trajectory reachability calculation
@@ -61,8 +88,8 @@ xlabel('x-coordinate (m)');
 ylabel('y-coordinate (m)');
 
 %% create obstacle and intersect with FRS
-obs_center = [30; 0];
-obs_gen = [[10; 0], [5; 15]];
+obs_center = [3; 0];
+obs_gen = [[1; 0], [0.5; 1.5]];
 obs_zono = zonotope([obs_center, obs_gen]);
 obstacle = obs_zono.Z;
 
@@ -75,7 +102,7 @@ p_obs.EdgeAlpha = 0.5;
 % loop through zonotopes of FRS, find "k-sliceable" generators
 % and generate obstacle constraints.
 obs_dim = [1; 2]; % note that the obstacle exists in the x-y space (not theta or v)
-k_dim = [3; 4]; % note that the parameters k are in the 3rd and 4th rows of the zonotopes
+k_dim = [5; 6]; % note that the parameters k are in the 3rd and 4th rows of the zonotopes
 buffer_dist = 0; % assume no buffer.
 
 % polytope representation of obstacle

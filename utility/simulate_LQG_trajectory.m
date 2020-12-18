@@ -47,12 +47,12 @@ function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
             u = u_nom - K*err;
 
             % dynamics
-            w = mvnrnd([0 0], Q, 1)';
+            w = mvnrnd(zeros(n,1), Q, 1)';
             x = A*x + B*u + w;
             X(:,i,i_traj) = x;
             
             % noisy/biased measurement
-            v = mvnrnd([0 0], R, 1)';
+            v = mvnrnd(zeros(n,1), R, 1)';
             z = C*x + v;
 
             % Kalman filter predict
