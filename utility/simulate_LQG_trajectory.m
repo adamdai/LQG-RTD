@@ -21,6 +21,7 @@ function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
     K = sys.K; Q = sys.Q; R = sys.R;
     
     n = size(A,1); % system dimension
+    m = size(R,1); % measurement dimension
     
     % iteratively generate nominal trajectory
     x_nom = zeros(n,N); x_nom(:,1) = x0;
@@ -52,7 +53,7 @@ function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
             X(:,i,i_traj) = x;
             
             % noisy/biased measurement
-            v = mvnrnd(zeros(n,1), R, 1)';
+            v = mvnrnd(zeros(m,1), R, 1)';
             z = C*x + v;
 
             % Kalman filter predict

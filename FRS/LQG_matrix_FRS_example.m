@@ -34,28 +34,34 @@ close all
 n = 4; % state dimension
 
 % trajectory discretization and length
-t_f = 1; dt = 0.02; N = t_f/dt; 
+t_f = 1; dt = 0.01; N = t_f/dt; 
 
 % system
 A = eye(n);
 A(1:2,3:4) = dt*eye(2);
-B = 10*[zeros(2); dt*eye(2)]; 
-C = eye(n);
+% B = [zeros(2); dt*eye(2)]; 
+B = [dt^2/2 0; 0 dt^2/2; dt 0; 0 dt];
+% C = eye(n);
+C = [1 0 0 0; 0 1 0 0];
 K = dlqr(A,B,eye(n),eye(2)); % feedback law u = -Kx
-Q = 0.001 * eye(n); % process noise covariance
-R = 0.001 * eye(n); % measurement noise covariance
+% Q = 0.001 * eye(n); % process noise covariance
+Q = 0.1*[dt^3/3 0  dt^2/2 0; 0 dt^3/3 0 dt^2/2; dt^2/2 0 dt 0; 0 dt^2/2 0 dt];
+% R = 0.001 * eye(n); % measurement noise covariance
+R = 0.001*eye(2);
 
 % form sys struct
 sys.A = A; sys.B = B; sys.C = C;
 sys.K = K; sys.Q = Q; sys.R = R;
 
 x0 = zeros(n,1); % inital state
-P0 = 0.003*eye(n); % initial covariance
+% P0 = 0.003*eye(n); % initial covariance
+P0 = diag([0.01 0.01 0.0001 0.0001]);
 
 % define trajectory parameter space
 K1 = 1;
 K2 = 1; 
 U_nom = zonotope([0 K1 0; 0 0 K2]);
+% U_nom = zonotope([1 0 0; 1 0 0]);
 
 %% full trajectory reachability calculation
 
@@ -79,6 +85,7 @@ hold on; grid on;
 for i = 1:N
     umeanZ = mean(pXrs{i});
     covZ = cov2zonotope(sigma(pXrs{i}),m,n);
+%     covZ = cov2zonotope(sigma(pXrs{i}),m);
     Xrs{i} = umeanZ + covZ;
     plot(Xrs{i},[1,2],'Color','black');
 end
@@ -88,7 +95,7 @@ xlabel('x-coordinate (m)');
 ylabel('y-coordinate (m)');
 
 %% create obstacle and intersect with FRS
-obs_center = [3; 0];
+obs_center = [5; 0];
 obs_gen = [[1; 0], [0.5; 1.5]];
 obs_zono = zonotope([obs_center, obs_gen]);
 obstacle = obs_zono.Z;
@@ -149,7 +156,7 @@ for i = 1:length(k1_sample)
     for j = 1:length(k2_sample)
         K = [Xk(i, j); Yk(i, j)];
         lambdas = (K - c_k)./g_k; % given a parameter, get coefficients on k_slc_G generators
-        for k = 1:length(A_con)
+        for k = 2:length(A_con) % ============ since initial set is not sliceable w.r.t. inputs
             Zk_tmp = A_con{k}*lambdas - b_con{k}; % A*lambda - b <= 0 means inside unsafe set
             Zk_tmp = max(Zk_tmp); % max of this <= 0 means inside unsafe set
             Zk(i, j) = min(Zk(i, j), Zk_tmp); % take smallest max. if it's <=0, then unsafe
@@ -166,7 +173,10 @@ plot(k1_user, k2_user, 'b.', 'MarkerSize', 30, 'LineWidth', 6);
 
 % plot reachable set corresponding to particular parameter "slice"
 figure(1);
-for i = 1:length(Xrs)
+% ============ since initial set is not sliceable w.r.t. inputs
+p_0 = plot(X0,[1, 2],'FaceColor','b','Filled',true);
+p_0.FaceAlpha = 0.25;
+for i = 2:length(Xrs)
     p_slice = plot(zonotope_slice(Xrs{i},k_dim,[k1_user; k2_user]),[1, 2],'FaceColor','b','Filled',true);
     p_slice.FaceAlpha = 0.25;
 end
