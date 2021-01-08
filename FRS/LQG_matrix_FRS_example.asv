@@ -7,42 +7,72 @@ clear
 close all
 
 %% 2D system
+% n = 2; % dimension
+% 
+% % trajectory discretization and length
+% t_f = 10; dt = 0.2; N = t_f/dt; 
+% 
+% % system
+% A = eye(2); B = dt*eye(2); C = eye(2);
+% K = dlqr(A,B,eye(2),eye(2)); % feedback law u = -Kx
+% Q = diag([0.1 0.1]); % process noise covariance
+% R = diag([0.1 0.1]); % measurement noise covariance
+% 
+% % form sys struct
+% sys.A = A; sys.B = B; sys.C = C;
+% sys.K = K; sys.Q = Q; sys.R = R;
+% 
+% x0 = [0;0]; % inital state
+% P0 = 0.3*eye(2); % initial covariance
+% 
+% % define trajectory parameter space
+% K1 = 5; 
+% K2 = 4; 
+% U_nom = zonotope([0 K1 0; 0 0 K2]);
 
-n = 2; % state dimension
+%% double integrator system
+n = 4; % state dimension
 
 % trajectory discretization and length
-t_f = 10; dt = 0.2; N = t_f/dt; 
+t_f = 5; dt = 0.05; N = t_f/dt; 
 
 % system
-A = eye(2); B = dt*eye(2); C = eye(2);
-K = dlqr(A,B,eye(2),eye(2)); % feedback law u = -Kx
-Q = diag([0.1 0.1]); % process noise covariance
-R = diag([0.1 0.1]); % measurement noise covariance
+A = eye(n);
+A(1:2,3:4) = dt*eye(2);
+% B = [zeros(2); dt*eye(2)]; 
+B = [dt^2/2 0; 0 dt^2/2; dt 0; 0 dt];
+% C = eye(n);
+C = [1 0 0 0; 0 1 0 0];
+K = dlqr(A,B,eye(n),eye(2)); % feedback law u = -Kx
+% Q = 0.001 * eye(n); % process noise covariance
+Q = 0.1*[dt^3/3 0  dt^2/2 0; 0 dt^3/3 0 dt^2/2; dt^2/2 0 dt 0; 0 dt^2/2 0 dt];
+% R = 0.001 * eye(n); % measurement noise covariance
+R = 0.001*eye(2);
 
 % form sys struct
 sys.A = A; sys.B = B; sys.C = C;
 sys.K = K; sys.Q = Q; sys.R = R;
 
-x0 = [0;0]; % inital state
-P0 = 0.5*eye(2); % initial covariance
+x0 = zeros(n,1); % inital state
+% P0 = 0.003*eye(n); % initial covariance
+P0 = diag([0.01 0.01 0.0001 0.0001]);
 
 % define trajectory parameter space
-K1 = 0.5; % -0.5 to +0.5
-K2 = 0.5; % -0.5 to +0.5
-
-% compute nominal trajectory FRS
-X_nom = linear_FRS(K1,K2,t_f,dt);
+K1 = 1;
+K2 = 1; 
+U_nom = zonotope([0 K1 0; 0 0 K2]);
+% U_nom = zonotope([1 0 0; 1 0 0]);
 
 %% full trajectory reachability calculation
 
 % initial reachable set X0
-xZ0 = [0;0;0;0]; % (uncertain) mean
-                 % x0, y0, k1_c, k2_c
-xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
-% X0 = probZonotope(xZ0,cov2probGen(P0),3);
-X0 = probZonotope(xZ0,cov2probGen(blkdiag(P0,zeros(2))),3);
+% xZ0 = [0;0;0;0]; % (uncertain) mean
+%                  % x0, y0, k1_c, k2_c
+% xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
+X0 = probZonotope(x0,cov2probGen(P0),3);
+%X0 = probZonotope(xZ0,cov2probGen(blkdiag(P0,zeros(2))),3);
 
-pXrs = LQG_FRS(X_nom,sys,X0);
+pXrs = LQG_matrix_FRS(U_nom,x0,sys,X0,N);
 
 %% plot 3-sigma confidence zonotopes
 m = 3;
@@ -55,6 +85,7 @@ hold on; grid on;
 for i = 1:N
     umeanZ = mean(pXrs{i});
     covZ = cov2zonotope(sigma(pXrs{i}),m,n);
+%     covZ = cov2zonotope(sigma(pXrs{i}),m);
     Xrs{i} = umeanZ + covZ;
     plot(Xrs{i},[1,2],'Color','black');
 end
@@ -64,8 +95,8 @@ xlabel('x-coordinate (m)');
 ylabel('y-coordinate (m)');
 
 %% create obstacle and intersect with FRS
-obs_center = [6; 0];
-obs_gen = [[2; 0], [1; 3]];
+obs_center = [5; 0];
+obs_gen = [[1; 0], [0.5; 1.5]];
 obs_zono = zonotope([obs_center, obs_gen]);
 obstacle = obs_zono.Z;
 
@@ -78,10 +109,11 @@ p_obs.EdgeAlpha = 0.5;
 % loop through zonotopes of FRS, find "k-sliceable" generators
 % and generate obstacle constraints.
 obs_dim = [1; 2]; % note that the obstacle exists in the x-y space (not theta or v)
-k_dim = [3; 4]; % note that the parameters k are in the 3rd and 4th rows of the zonotopes
+k_dim = [5; 6]; % note that the parameters k are in the 3rd and 4th rows of the zonotopes
 buffer_dist = 0; % assume no buffer.
 
-% polytope representation of obstacle
+% polytope (halfspace) representation of obstacle/FRS intersection
+% this allows us to formulate constraints for the optimization 
 A_con = {};
 b_con = {};
 for i = 1:length(Xrs)
@@ -125,7 +157,7 @@ for i = 1:length(k1_sample)
     for j = 1:length(k2_sample)
         K = [Xk(i, j); Yk(i, j)];
         lambdas = (K - c_k)./g_k; % given a parameter, get coefficients on k_slc_G generators
-        for k = 1:length(A_con)
+        for k = 2:length(A_con) % ============ since initial set is not sliceable w.r.t. inputs
             Zk_tmp = A_con{k}*lambdas - b_con{k}; % A*lambda - b <= 0 means inside unsafe set
             Zk_tmp = max(Zk_tmp); % max of this <= 0 means inside unsafe set
             Zk(i, j) = min(Zk(i, j), Zk_tmp); % take smallest max. if it's <=0, then unsafe
@@ -142,17 +174,19 @@ plot(k1_user, k2_user, 'b.', 'MarkerSize', 30, 'LineWidth', 6);
 
 % plot reachable set corresponding to particular parameter "slice"
 figure(1);
-for i = 1:length(Xrs)
+% ============ since initial set is not sliceable w.r.t. inputs
+p_0 = plot(X0,[1, 2],'FaceColor','b','Filled',true);
+p_0.FaceAlpha = 0.25;
+for i = 2:length(Xrs)
     p_slice = plot(zonotope_slice(Xrs{i},k_dim,[k1_user; k2_user]),[1, 2],'FaceColor','b','Filled',true);
     p_slice.FaceAlpha = 0.25;
 end
 
 %% sample trajectories 
 
-N_traj = 100;
+N_traj = 1000;
 
-u = repmat([k1_user; k2_user],1,N);
-X = simulate_LQG_trajectory(sys,N,N_traj,u,x0,P0);
+X = simulate_LQG_trajectory(sys,N,N_traj,[k1_user; k2_user],x0,P0);
 
 figure(1);
 for i_traj = 1:N_traj

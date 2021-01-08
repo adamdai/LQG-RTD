@@ -1,80 +1,66 @@
-% example for computing FRS for LQG agent over a space trajectory
-% parameters and intersecting it with a zonotopic obstacle to determine
-% unsafe trajectory parameters
+% Perform RTD over a single planning horizon for an LQG system initialized
+% near a single obstacle
 
 clc
 clear
 close all
 
-%% 2D system
-% n = 2; % dimension
-% 
-% % trajectory discretization and length
-% t_f = 10; dt = 0.2; N = t_f/dt; 
-% 
-% % system
-% A = eye(2); B = dt*eye(2); C = eye(2);
-% K = dlqr(A,B,eye(2),eye(2)); % feedback law u = -Kx
-% Q = diag([0.1 0.1]); % process noise covariance
-% R = diag([0.1 0.1]); % measurement noise covariance
-% 
-% % form sys struct
-% sys.A = A; sys.B = B; sys.C = C;
-% sys.K = K; sys.Q = Q; sys.R = R;
-% 
-% x0 = [0;0]; % inital state
-% P0 = 0.3*eye(2); % initial covariance
-% 
-% % define trajectory parameter space
-% K1 = 5; 
-% K2 = 4; 
-% U_nom = zonotope([0 K1 0; 0 0 K2]);
-
 %% double integrator system
-n = 4; % state dimension
+n_s = 4; % state dimension
+n_i = 2; % input dimension
+n_m = 2; % measurement dimension
+pos_i = 1:2; % position indices
 
-% trajectory discretization and length
+% trajectory discretization and length (planning horizon)
 t_f = 5; dt = 0.05; N = t_f/dt; 
 
 % system
-A = eye(n);
+A = eye(n_s);
 A(1:2,3:4) = dt*eye(2);
-% B = [zeros(2); dt*eye(2)]; 
-B = [dt^2/2 0; 0 dt^2/2; dt 0; 0 dt];
-% C = eye(n);
-C = [1 0 0 0; 0 1 0 0];
-K = dlqr(A,B,eye(n),eye(2)); % feedback law u = -Kx
-% Q = 0.001 * eye(n); % process noise covariance
-Q = 0.1*[dt^3/3 0  dt^2/2 0; 0 dt^3/3 0 dt^2/2; dt^2/2 0 dt 0; 0 dt^2/2 0 dt];
-% R = 0.001 * eye(n); % measurement noise covariance
-R = 0.001*eye(2);
+B = [dt^2/2 0; 
+     0      dt^2/2; 
+     dt     0; 
+     0      dt];
+C = [1 0 0 0;  
+     0 1 0 0];
+ 
+K = dlqr(A,B,eye(n_s),eye(n_i)); % feedback law u = -Kx
+
+Q = 0.1*[dt^3/3 0      dt^2/2 0;  
+         0      dt^3/3 0      dt^2/2; 
+         dt^2/2 0      dt     0; 
+         0      dt^2/2 0      dt]; % process noise covariance
+R = 0.001*eye(n_m); % measurement noise covariance
 
 % form sys struct
 sys.A = A; sys.B = B; sys.C = C;
 sys.K = K; sys.Q = Q; sys.R = R;
 
-x0 = zeros(n,1); % inital state
-% P0 = 0.003*eye(n); % initial covariance
-P0 = diag([0.01 0.01 0.0001 0.0001]);
+x0 = zeros(n_s,1); % inital state
+P0 = diag([0.01 0.01 0.0001 0.0001]); % initial covariance
 
 % define trajectory parameter space
 K1 = 1;
 K2 = 1; 
 U_nom = zonotope([0 K1 0; 0 0 K2]);
-% U_nom = zonotope([1 0 0; 1 0 0]);
 
-%% full trajectory reachability calculation
+%% plot agent
 
-% initial reachable set X0
-% xZ0 = [0;0;0;0]; % (uncertain) mean
-%                  % x0, y0, k1_c, k2_c
-% xZ0 = [xZ0, [0;0;K1;0], [0;0;0;K2]]; % K1, K2 generators
+figure(1)
+hold on; grid on;
+
+scatter(x0(1), x0(2),'filled');
+
+axis equal
+xlabel('x-coordinate (m)');
+ylabel('y-coordinate (m)');
+
+%% compute FRS
+
 X0 = probZonotope(x0,cov2probGen(P0),3);
 %X0 = probZonotope(xZ0,cov2probGen(blkdiag(P0,zeros(2))),3);
 
-tic
 pXrs = LQG_matrix_FRS(U_nom,x0,sys,X0,N);
-toc
 
 %% plot 3-sigma confidence zonotopes
 m = 3;
@@ -86,8 +72,7 @@ hold on; grid on;
 % plot full FRS
 for i = 1:N
     umeanZ = mean(pXrs{i});
-    covZ = cov2zonotope(sigma(pXrs{i}),m,n);
-%     covZ = cov2zonotope(sigma(pXrs{i}),m);
+    covZ = cov2zonotope(sigma(pXrs{i}),m,n_s);
     Xrs{i} = umeanZ + covZ;
     plot(Xrs{i},[1,2],'Color','black');
 end
@@ -96,7 +81,9 @@ axis equal
 xlabel('x-coordinate (m)');
 ylabel('y-coordinate (m)');
 
-%% create obstacle and intersect with FRS
+
+%% create obstacle
+
 obs_center = [5; 0];
 obs_gen = [[1; 0], [0.5; 1.5]];
 obs_zono = zonotope([obs_center, obs_gen]);
@@ -154,25 +141,46 @@ k2_sample = linspace(-K2, K2, 50);
 [Xk, Yk] = meshgrid(k1_sample, k2_sample);
 c_k = [0;0]; g_k = [K1;K2];
 
+cons = @(k) traj_opt_cons(k,c_k,g_k,A_con,b_con);
+
 Zk = inf*ones(size(Xk));
 for i = 1:length(k1_sample)
     for j = 1:length(k2_sample)
         K = [Xk(i, j); Yk(i, j)];
-        lambdas = (K - c_k)./g_k; % given a parameter, get coefficients on k_slc_G generators
-        for k = 2:length(A_con) % ============ since initial set is not sliceable w.r.t. inputs
-            Zk_tmp = A_con{k}*lambdas - b_con{k}; % A*lambda - b <= 0 means inside unsafe set
-            Zk_tmp = max(Zk_tmp); % max of this <= 0 means inside unsafe set
-            Zk(i, j) = min(Zk(i, j), Zk_tmp); % take smallest max. if it's <=0, then unsafe
-        end
+        Zk(i,j) = cons(K);
+%         lambdas = (K - c_k)./g_k; % given a parameter, get coefficients on k_slc_G generators
+%         for k = 2:length(A_con) % ============ since initial set is not sliceable w.r.t. inputs
+%             Zk_tmp = A_con{k}*lambdas - b_con{k}; % A*lambda - b <= 0 means inside unsafe set
+%             Zk_tmp = max(Zk_tmp); % max of this <= 0 means inside unsafe set
+%             Zk(i, j) = min(Zk(i, j), Zk_tmp); % take smallest max. if it's <=0, then unsafe
+%         end
     end
 end
-p_unsafe = contourf(Xk, Yk, -Zk, [0, 0], 'FaceColor', 'r'); % show zero level set contours
+p_unsafe = contourf(Xk, Yk, Zk, [0, 0], 'FaceColor', 'r'); % show zero level set contours
+%cost_contours = contourf(Xk, Yk, Zc, 100); % show cost function contours
 
-%% have user select a point, see the corresponding slice of FRS:
-figure(2);
-disp('Click a point!');
-[k1_user, k2_user] = ginput(1);
-plot(k1_user, k2_user, 'b.', 'MarkerSize', 30, 'LineWidth', 6);
+%% trajectory optimization
+x_g = [10;0]; % arbitary goal
+c_k = [0;0]; g_k = [K1;K2];
+
+cost = @(k) traj_opt_cost(sys,pos_i,N,k,x_g);
+cons = @(k) traj_opt_cons(k,c_k,g_k,A_con,b_con);
+initial_guess = zeros(2,1);
+
+lb = [-K1, -K2];
+ub = [K1, K2];
+
+o = optimoptions('fmincon');
+o.OptimalityTolerance = 1e-5;
+o.MaxIterations = 100000;
+o.MaxFunctionEvaluations = 10000;
+o.SpecifyConstraintGradient = true;
+o.SpecifyObjectiveGradient = true;
+
+k = fmincon(cost,initial_guess,[],[],[],[],lb,ub,cons,o);
+
+
+%% plot 
 
 % plot reachable set corresponding to particular parameter "slice"
 figure(1);
@@ -180,18 +188,10 @@ figure(1);
 % p_0 = plot(X0,[1, 2],'FaceColor','b','Filled',true);
 % p_0.FaceAlpha = 0.25;
 for i = 2:length(Xrs)
-    p_slice = plot(zonotope_slice(Xrs{i},k_dim,[k1_user; k2_user]),[1, 2],'FaceColor','b','Filled',true);
+    p_slice = plot(zonotope_slice(Xrs{i},k_dim,k),[1, 2],'FaceColor','b','Filled',true);
     p_slice.FaceAlpha = 0.25;
 end
 
-%% sample trajectories 
+% show goal
+scatter(x_g(1), x_g(2),'filled');
 
-N_traj = 1000;
-
-u = repmat([k1_user; k2_user],1,N);
-X = simulate_LQG_trajectory(sys,N,N_traj,u,x0,P0);
-
-figure(1);
-for i_traj = 1:N_traj
-    plot(X(1,:,i_traj),X(2,:,i_traj),'r');
-end

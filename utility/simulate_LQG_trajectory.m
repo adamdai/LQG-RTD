@@ -5,7 +5,7 @@
 %            noise covariance matrices Q and R  
 %   N      - trajectory length
 %   N_traj - number of trajectories to generate
-%   u_nom  - nominal input (constant)
+%   u_nom  - nominal input sequence
 %   x0     - initial state
 %   P0     - initial covariance
 %
@@ -14,7 +14,7 @@
 %       of length N
 %   
 
-function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
+function [X,x_nom] = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
     
     % retrieve system matrices from sys struct
     A = sys.A; B = sys.B; C = sys.C;
@@ -26,7 +26,7 @@ function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
     % iteratively generate nominal trajectory
     x_nom = zeros(n,N); x_nom(:,1) = x0;
     for i = 2:N
-        x_nom(:,i) = A*x_nom(:,i-1) + B*u_nom;
+        x_nom(:,i) = A*x_nom(:,i-1) + B*u_nom(:,i-1);
     end
     
     X = nan(n,N,N_traj);
@@ -45,7 +45,7 @@ function X = simulate_LQG_trajectory(sys,N,N_traj,u_nom,x0,P0)
 
             % apply feedback control
             err = x_est - x_nom(:,i-1);
-            u = u_nom - K*err;
+            u = u_nom(:,i-1) - K*err;
 
             % dynamics
             w = mvnrnd(zeros(n,1), Q, 1)';

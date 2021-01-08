@@ -3,6 +3,7 @@ function [PA, Pb, C] = polytope_PH(Z)
 % (only for 2D or 3D)
 % this function is based off of the CORA_2018 function which is at
 % .../CORA_2018/contSet/@zonotope/polytope.m
+% math is from theorem 2.1 of Althoff thesis
 %
 %obtain number of generators, dimensions
 c = Z(:, 1);
