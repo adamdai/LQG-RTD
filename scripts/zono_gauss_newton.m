@@ -32,7 +32,7 @@ y_G = 0.1*eye(4);
 y = zonotope([y_c, y_G]);
 
 % 100 samples within y
-n_samp = 100;
+n_samp = 1000;
 Y = sampleBox(y,n_samp); 
 
 X = zeros(2,n_samp);
