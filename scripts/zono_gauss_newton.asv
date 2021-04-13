@@ -38,22 +38,13 @@ Y = sampleBox(y,n_samp);
 X = zeros(2,n_samp);
 
 for j = 1:n_samp
-    x = x0;
     for i = 1:N
         Ji = J(x,M);
-        ri = g(x,M) - Y(:,j);
+        ri = g(x,M) - y;
         dx = inv(Ji'*Ji) * Ji'*ri;
         x = x - dx;
     end
-    X(:,j) = x;
 end
-
-x = X(1,:)'; y = X(2,:)';
-k = boundary(x,y);
-
-hold on 
-plot(x(k),y(k));
-scatter(x,y);
 
 
 %% Zonotope GN
@@ -78,7 +69,7 @@ for i = 1:N
     %ri = g_z(x,M) - y;
     ri = g_z(x,M) + zonotope(-y.center,y.generators);
     JiT = intMat_transpose(Ji);
-    JTJ = intervalMatrix(matZonotope(JiT*Ji)); % workaround for bug in CORA
+    JTJ = intervalMatrix(matZonotope(JiT*Ji));
     dx = intMat_inverse(JTJ) * JiT*ri;
     dx = zonotope(-dx.center, dx.generators);  % x = x - dx
     x = x + dx; 

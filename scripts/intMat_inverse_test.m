@@ -1,11 +1,8 @@
-% returns the inverse of an interval matrix
-% (cop out with sampling for now)
+% compare overapproximated interval matrix inverse and true inverse set
 
-% C = [2 3; 4 5];
-% G = [1 0.5; 0.2 2];
-% A = intervalMatrix(C,G);
-
-function Ainv = intMat_inverse(A)
+C = [2 3; 4 5];
+G = [1 0.5; 0.2 2];
+A = intervalMatrix(C,G);
    
 % check for nonzero volume
 if volume(A) == 0
@@ -31,7 +28,7 @@ else
     Ainv = intervalMatrix(Ainv_c, Ainv_r);
 end
 
-end
+
 
 
 
