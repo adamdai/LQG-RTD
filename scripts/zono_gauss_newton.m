@@ -22,6 +22,13 @@ for i = 1:N
     x = x - dx;
 end
 
+figure(1); hold on; grid on
+scatter(M(1,:)',M(2,:)','o');
+scatter(x(1),x(2),'*');
+for i = 1:4
+    plot([M(1,i);x(1)],[M(2,i);x(2)],'--b');
+end
+
 %% Uncertain GN (sampling-based)
 
 x0 = [5;5];
@@ -51,7 +58,7 @@ end
 x = X(1,:)'; y = X(2,:)';
 k = boundary(x,y);
 
-hold on 
+figure(2); hold on 
 plot(x(k),y(k));
 scatter(x,y);
 
@@ -66,7 +73,7 @@ y_c = [2.2; 8.0; 12.0; 9.2];
 y_G = 0.1*eye(4);
 y = zonotope([y_c, y_G]);
 
-hold on; grid on
+figure(3); hold on; grid on
 plot(2,1,'r*');
 
 axis equal
@@ -83,7 +90,7 @@ for i = 1:N
     dx = zonotope(-dx.center, dx.generators);  % x = x - dx
     x = x + dx; 
     x = reduce(x,'methA'); 
-    %plot(x,[1,2],'FaceColor','r','FaceAlpha',0.2,'Filled',true);
+    plot(x,[1,2],'FaceColor','r','FaceAlpha',0.2,'Filled',true);
     %xlim([0 10]); ylim([0 10])
 end
 

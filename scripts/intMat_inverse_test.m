@@ -3,6 +3,8 @@
 C = [2 3; 4 5];
 G = [1 0.5; 0.2 2];
 A = intervalMatrix(C,G);
+
+A = intMat_transpose(A) * A;
    
 % sample for intMat
 N = 10000;
@@ -31,6 +33,7 @@ for i = 1:2
         plot([Ainv_lb(i,j);Ainv_ub(i,j)],[0;0],'-o','LineWidth',2);
         xlim([Ainv_lb(i,j)-1, Ainv_ub(i,j)+1]); ylim([-1 1]);
         scatter(Ainv_set(i,j,:),zeros(N,1),'*');
+        title(sprintf('[%d,%d]',i,j));
     end
 end
 % % Ainv_(1,2)
