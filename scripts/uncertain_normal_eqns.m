@@ -3,11 +3,11 @@
 % interval matrix and b is a zonotope
 
 %% setup
-% A_c = [1 6; 
-%        2 3;
-%        3 4];
-%A_c = 2*rand(3,2);
-A_c = randi([-5,5],3,2);
+A_c = [1 6; 
+       2 3;
+       3 4];
+%A_c = 5*rand(3,2);
+%A_c = randi([-5,5],3,2);
 A_g = [0.1 0.2; 
        0.2 0.5;
        0.1 0.4];
@@ -17,7 +17,7 @@ b_c = [2; -1; 1];
 b_g = 0.1*eye(3);
 b_z = zonotope([b_c, b_g]);
 
-% sample some solutions
+%% sample solutions
 N_b = 1000; % number of b's to sample
 N_A = 1000; % number of A's to sample
 
@@ -35,4 +35,6 @@ for i = 1:N_A
     end
 end
 
-scatter(reshape(X(1,:,:),[1,N_A*N_b]), reshape(X(2,:,:),[1,N_A*N_b]))
+figure(); axis equal; grid on; hold on
+scatter(reshape(X(1,:,:),[1,N_A*N_b]), reshape(X(2,:,:),[1,N_A*N_b]), '.')
+xlabel('$x_1$','Interpreter','latex'); ylabel('$x_2$','Interpreter','latex');

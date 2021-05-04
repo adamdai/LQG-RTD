@@ -6,11 +6,11 @@
 % subject to  Ax <= b
 %             x >= 0
 
-c = [0.6, 0.35];
-A = [5 7;
-     4 2;
-     2 1];
-b = [8; 15; 3];
-
+A = [3,1,1,0;
+     1,2,0,1];
+b = [8,9];
+c = [-4,-5,0,0];
+format short;
 
 % simplex method (?)
+nma_simplex(A,b,c,false)
