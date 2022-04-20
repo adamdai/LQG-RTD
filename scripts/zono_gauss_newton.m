@@ -22,7 +22,7 @@ for i = 1:N
     x = x - dx;
 end
 
-figure(1); hold on; grid on
+figure(1); hold on; grid on; axis equal
 scatter(M(1,:)',M(2,:)','o');
 scatter(x(1),x(2),'*');
 for i = 1:4
@@ -58,41 +58,41 @@ end
 x = X(1,:)'; y = X(2,:)';
 k = boundary(x,y);
 
-figure(2); hold on 
+figure(1); hold on 
 plot(x(k),y(k));
 scatter(x,y);
 
 
 %% Zonotope GN
 
-x0 = [5;5];
-x = zonotope(x0);
-
-% uncertain measurements
-y_c = [2.2; 8.0; 12.0; 9.2]; 
-y_G = 0.1*eye(4);
-y = zonotope([y_c, y_G]);
-
-figure(3); hold on; grid on
-plot(2,1,'r*');
-
-axis equal
-xlabel('x-coordinate (m)');
-ylabel('y-coordinate (m)');
-
-for i = 1:N
-    Ji = J_z(x,M);
-    %ri = g_z(x,M) - y;
-    ri = g_z(x,M) + zonotope(-y.center,y.generators);
-    JiT = intMat_transpose(Ji);
-    JTJ = intervalMatrix(matZonotope(JiT*Ji)); % workaround for bug in CORA
-    dx = intMat_inverse(JTJ) * JiT*ri;
-    dx = zonotope(-dx.center, dx.generators);  % x = x - dx
-    x = x + dx; 
-    x = reduce(x,'methA'); 
-    plot(x,[1,2],'FaceColor','r','FaceAlpha',0.2,'Filled',true);
-    %xlim([0 10]); ylim([0 10])
-end
+% x0 = [5;5];
+% x = zonotope(x0);
+% 
+% % uncertain measurements
+% y_c = [2.2; 8.0; 12.0; 9.2]; 
+% y_G = 0.1*eye(4);
+% y = zonotope([y_c, y_G]);
+% 
+% figure(3); hold on; grid on
+% plot(2,1,'r*');
+% 
+% axis equal
+% xlabel('x-coordinate (m)');
+% ylabel('y-coordinate (m)');
+% 
+% for i = 1:N
+%     Ji = J_z(x,M);
+%     %ri = g_z(x,M) - y;
+%     ri = g_z(x,M) + zonotope(-y.center,y.generators);
+%     JiT = intMat_transpose(Ji);
+%     JTJ = intervalMatrix(matZonotope(JiT*Ji)); % workaround for bug in CORA
+%     dx = intMat_inverse(JTJ) * JiT*ri;
+%     dx = zonotope(-dx.center, dx.generators);  % x = x - dx
+%     x = x + dx; 
+%     x = reduce(x,'methA'); 
+%     plot(x,[1,2],'FaceColor','r','FaceAlpha',0.2,'Filled',true);
+%     %xlim([0 10]); ylim([0 10])
+% end
 
 %% functions
 

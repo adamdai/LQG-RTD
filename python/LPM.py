@@ -19,9 +19,12 @@ class LPM:
         Sample time of trajectory (discretization)
     time : np.array
         Time vector for trajectory
-    p_mat : np.array
-    v_mat : np.array
-    a_mat : np.array
+    P_mat : np.array (3 x N)
+        Matrix for computing positions
+    V_mat : np.array (3 x N)
+        Matrix for computing velocities
+    A_mat : np.array (3 x N)
+        Matrix for computing accelerations
     
     Methods
     -------
@@ -58,9 +61,9 @@ class LPM:
         self.t_total = lpm['t_total'][0,0][0][0]
         self.t_sample = lpm['t_sample'][0,0][0][0]
         self.time = np.array(lpm['time'][0,0])[0]
-        self.p_mat = np.array(lpm['position'][0,0])
-        self.v_mat = np.array(lpm['velocity'][0,0])
-        self.a_mat = np.array(lpm['acceleration'][0,0])
+        self.P_mat = np.array(lpm['position'][0,0])
+        self.V_mat = np.array(lpm['velocity'][0,0])
+        self.A_mat = np.array(lpm['acceleration'][0,0])
 
 
     def compute_trajectory(self, k):
@@ -77,10 +80,39 @@ class LPM:
             Tuple of the form (p,v,a) where each of p,v,a are n x N where n is the workspace dimension.
         
         """
-        p = np.dot(k, self.p_mat)
-        v = np.dot(k, self.v_mat)
-        a = np.dot(k, self.a_mat)
+        p = k @ self.P_mat
+        v = k @ self.V_mat
+        a = k @ self.A_mat
         return p,v,a
+
+    
+    def compute_positions(self, k):
+        """Compute positions from a given trajectory parameter.
+
+        Parameters
+        ----------
+        k : np.array
+            trajectory parameter k = (v_0, a_0, v_peak), n x 3 where n is workspace dimension
+        
+        Returns
+        -------
+        np.array 
+            Positions
+        
+        """
+        return k @ self.P_mat
+
+    
+    def compute_endpoints(self, v_0, a_0, V_peak):
+        """Compute trajectory endpoints given initial conditions and collection of V_peaks
+        
+        """
+        LPM_p_final = self.P_mat[:,-1]
+        # Final position contribution from v_0 and a_0
+        p_from_v_0_and_a_0 = (np.hstack((v_0, a_0)) @ LPM_p_final[:2])[:, None]
+        # Add in contribution from v_peak
+        P_endpoints = p_from_v_0_and_a_0 + LPM_p_final[2] * V_peak 
+        return P_endpoints
 
 
     def solve_trajectory(self, v_0, a_0, p_goal):
@@ -103,11 +135,12 @@ class LPM:
             Peak velocity (1 x n row vector).
             
         """
-        # change to column vectors
+        # Change to column vectors
         v_0 = np.reshape(v_0, (3,1))
         a_0 = np.reshape(a_0, (3,1))
-        # position component due to v_0 and a_0
-        p_from_ic = np.dot(np.hstack((v_0, a_0)), self.p_mat[0:2,-1])
-        # solve for v_peak
-        v_peak = (p_goal - p_from_ic) / self.p_mat[2,-1]
+        # Position component due to v_0 and a_0
+        p_from_ic = np.dot(np.hstack((v_0, a_0)), self.P_mat[0:2,-1])
+        # Solve for v_peak
+        v_peak = (p_goal - p_from_ic) / self.P_mat[2,-1]
         return v_peak
+

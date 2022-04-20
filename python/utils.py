@@ -1,97 +1,50 @@
 import numpy as np
+import time
+
 from LPM import LPM
 import params
 
-class plan:
-    """Plan class
+class Trajectory:
+    """Trajectory class
 
     Planned trajectory
     
     Attributes
     ----------
-    n_plan : int
+    length : int
+        Length of trajectory (i.e. number of timesteps)
+    N_dim : int
+        State dimension of the trajectory (i.e. 2D or 3D)
     t : np.array (1 x N)
-    p : np.array (1 x N)
-    v : np.array (1 x N)
-    a : np.array (1 x N)
+        Time array
+    p : np.array (N_dim x N)
+        Positions
+    v : np.array (N_dim x N)
+        Velocities
+    a : np.array (N_dim x N)
+        Accelerations
 
     """
 
-    def __init__(self):
-        pass
-
-
-class rtd_planner:
-    """RTD Planner class
-
-    Trajectory planner which recomputes collision-free trajectories to follow 
-    in a receding-horizon fashion.
-
-    Attributes
-    ----------
-
-    Methods
-    -------
-
-    """
-
-    def __init__(self, lpm_file):
-        # Initialize LPM object
-        self.lpm = LPM(lpm_file)
-        self.N_T_PLAN = len(self.lpm.time)  # planned trajectory length
-        self.DT = self.lpm.t_sample  # trajectory discretization time interval
-
-        # Initial conditions [m],[m/s],[m/s^2]
-        self.p_0 = np.zeros((params.N_DIM,1))
-        self.v_0 = np.zeros((params.N_DIM,1))
-        self.a_0 = np.zeros((params.N_DIM,1))
-
-        # Current plan ([p,v,a] x N)
-        self.plan = np.zeros((1+3*params.N_DIM, self.N_T_PLAN))
-
-        # Initialize with stationary plan
-        self.plan[0,:] = self.lpm.time
-        self.plan[1:4,:] = np.tile(self.p_0, (1,self.N_T_PLAN))
-
-        # Goal position [m]
-        self.p_goal = np.zeros((2,1))
-
-        # Obstacles
-        self.obstacles = []
-
-
-    def traj_opt(self):
-        """Trajectory Optimization
-
-        Attempt to find a collision-free plan (v_peak) which brings the agent 
-        closest to its goal.
-        
-        """
-
-        # Generate potential v_peak samples
-        V_peak = rand_in_bounds(params.V_BOUNDS, params.N_PLAN_MAX)
-        # Eliminate samples that exceed the max velocity and max delta from initial velocity
-        V_peak = prune_vel_samples(V_peak, self.v_0, params.V_MAX_NORM, params.DELTA_V_PEAK_MAX)
-        
-
-
-    def replan(self):
-        """Replan
-        
-        """
+    def __init__(self, T, N_dim):
+        """Initialize a trajectory with 0 position, velocity, and acceleration"""
+        self.T = T
+        self.length = len(T)
+        self.N_dim = N_dim
+        self.P = np.zeros((N_dim, self.length))
+        self.V = np.zeros((N_dim, self.length))
+        self.A = np.zeros((N_dim, self.length))
 
 
 
+def check_obs_collision(positions, obs, r_collision):
+    """Check a sequence of positions against a single obstacle for collision.
 
-def check_obs_collision(plan, obs, r_collision):
-    """Check a plan against a single obstacle for collision.
-
-    Obstacles are cylinders represented as (center, radius), and 
-    assumed to have infinite height for now.
+    Obstacles are cylinders represented as (center, radius)
 
     Parameters
     ----------
-    plan : np.array
+    positions : np.array
     obs : tuple
 
     Returns
@@ -100,9 +53,8 @@ def check_obs_collision(plan, obs, r_collision):
         True if the plan is safe, False is there is a collision
 
     """
-    c_obs,r_obs = obs
-    traj = plan[1:4,:]
-    d_vec = np.linalg.norm(traj[:2,:] - c_obs[:,None], 2, 0)
+    c_obs, r_obs = obs
+    d_vec = np.linalg.norm(positions - c_obs[:,None], axis=0)
     if any(d_vec <= r_collision + r_obs):
         return False
     else:
@@ -143,7 +95,31 @@ def prune_vel_samples(V, v_0, max_norm, max_delta):
     """Prune Velocity Samples
     
     """
-    V_mag = np.linalg.norm(V, ord=2, axis=0)
-    delta_V = np.linalg.norm(V - v_0, ord=2, axis=0)
+    V_mag = np.linalg.norm(V, axis=0)
+    delta_V = np.linalg.norm(V - v_0, axis=0)
     keep_idx = np.logical_and(V_mag < max_norm, delta_V < max_delta)
     return V[:,keep_idx]
+
+
+def dlqr_calculate(G, H, Q, R):
+    """
+    Discrete-time Linear Quadratic Regulator calculation.
+    State-feedback control  u[k] = -K*x[k]
+    Implementation from  https://github.com/python-control/python-control/issues/359#issuecomment-759423706
+    How to apply the function:    
+        K = dlqr_calculate(G,H,Q,R)
+        K, P, E = dlqr_calculate(G,H,Q,R, return_solution_eigs=True)
+    Inputs:
+      G, H, Q, R  -> all numpy arrays  (simple float number not allowed)
+      returnPE: define as True to return Ricatti solution and final eigenvalues
+    Returns:
+      K: state feedback gain
+      P: Ricatti equation solution
+      E: eigenvalues of (G-HK)  (closed loop z-domain poles)
+      
+    """
+    from scipy.linalg import solve_discrete_are, inv
+    P = solve_discrete_are(G, H, Q, R)  #Solução Ricatti
+    K = inv(H.T@P@H + R)@H.T@P@G    #K = (B^T P B + R)^-1 B^T P A 
+
+    return K

@@ -6,10 +6,10 @@ from LPM import LPM
 import utils
 
 
-class Simple_Planner:
-    """Simple Planner class
+class RTD_Planner:
+    """RTD Planner class
 
-    Simple Trajectory planner which recomputes collision-free trajectories to follow 
+    Reachability-based Trajectory Design planner which recomputes collision-free trajectories to follow 
     in a receding-horizon fashion.
 
     Trajectory: time-indexed positions, velocities, accelerations
