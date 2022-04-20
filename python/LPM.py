@@ -33,16 +33,6 @@ class LPM:
     solve_trajectory(v_0, a_0, p_goal)
 
     """
-    # Class variables
-    t_peak = 0
-    t_total = 0
-    t_sample = 0
-    time = []
-    p_mat = []
-    v_mat = []
-    a_mat = []
-
-
     def __init__(self, mat_file):
         """Construct LPM object from .mat file.
 
